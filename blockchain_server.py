@@ -22,7 +22,7 @@ class Blockchain:
 
     def create_block(self, nounce, timestamp, message, previous_hash):
         block = {
-            'timestamp': timestamp,
+            'timestamp': float(timestamp),
             'message': message,
             'nounce': nounce,
             'previous_hash': previous_hash
@@ -51,33 +51,28 @@ class Blockchain:
         return SHA256.new(f'{timestamp}|{message}|{nounce}|{previous_hash}'.encode()).hexdigest()
 
     def proof_of_work(self, block):
-        if SHA256.new(block.encode()).hexdigest().startswith("0"*self.difficulty):
-            timestamp, message, nounce, previous_hash = block.split("|")
+        timestamp, message, nounce, previous_hash = block.split("|")
+        if SHA256.new(block.encode()).hexdigest().startswith("0"*self.difficulty) and previous_hash == self.get_last_block_hash():
             self.create_block(nounce, timestamp, message, previous_hash)
             return True
 
         return False
 
-    # def chain_valid(self, chain):
-    #     previous_block = chain[0]
-    #     block_index = 1
+    def chain_valid(self):
+        for block_index in range(1, len(self.chain)):
+            last_block = self.chain[block_index-1]
+            timestamp = last_block["timestamp"]
+            message = last_block['message']
+            nounce = last_block["nounce"]
+            previous_hash = last_block["previous_hash"]
 
-    #     while block_index < len(chain):
-    #         block = chain[block_index]
-    #         if block['previous_hash'] != self.hash(previous_block):
-    #             return False
+            hashed_last_block = SHA256.new(
+                f'{timestamp}|{message}|{nounce}|{previous_hash}'.encode()).hexdigest()
 
-    #         previous_proof = previous_block['proof']
-    #         proof = block['proof']
-    #         hash_operation = hashlib.sha256(
-    #             str(proof**2 - previous_proof**2).encode()).hexdigest()
+            if self.chain[block_index]['previous_hash'] != hashed_last_block:
+                return False
 
-    #         if hash_operation[:2] != '00':
-    #             return False
-    #         previous_block = block
-    #         block_index += 1
-
-    #     return True
+        return True
 
 
 app = Flask(__name__)
@@ -118,39 +113,21 @@ def mine():
         return "Algo deu errado, tente novamente!", 500
 
 
+@app.route('/blocks/valid', methods=['GET'])
+def valid():
+    valid = blockchain.chain_valid()
+
+    if valid:
+        response = {'message': 'The Blockchain is valid.'}
+    else:
+        response = {'message': 'The Blockchain is not valid.'}
+    return jsonify(response), 200
+
+
 def difficulty():
     while True:
         blockchain.reduce_difficulty()
         time.sleep(3600)
-# @app.route('/blocks/mine_block', methods=['GET'])
-# def mine_block():
-#     nounce = 0
-#     timestamp = time()
-#     message = "Fernando"
-#     previous_hash = blockchain.get_last_block_hash()
-#     block = f"{timestamp}|{message}|{nounce}|{previous_hash}"
-#     h = SHA256.new(block.encode())
-#     difficulty = "0"*2
-
-#     while not h.hexdigest().startswith(difficulty):
-#         nounce += 1
-#         block = f"{timestamp}|{message}|{nounce}|{previous_hash}"
-#         h = SHA256.new(block.encode())
-#         if nounce % 10000 == 0:
-#             print(f"Nounce: {nounce}")
-
-#     result = blockchain.proof_of_work(block)
-#     return f"{result}"
-
-# @app.route('/valid', methods=['GET'])
-# def valid():
-#     valid = blockchain.chain_valid(blockchain.chain)
-
-#     if valid:
-#         response = {'message': 'The Blockchain is valid.'}
-#     else:
-#         response = {'message': 'The Blockchain is not valid.'}
-#     return jsonify(response), 200
 
 
 if __name__ == "__main__":
