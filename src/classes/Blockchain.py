@@ -7,7 +7,7 @@ class Blockchain:
     def __init__(self):
         self.chain = []
         # Creating genesis block
-        self.difficulty = 0
+        self.difficulty = 2
         self.create_block(
             nounce=1,
             timestamp=time.time(),
@@ -30,7 +30,7 @@ class Blockchain:
         self.difficulty += 1
 
     def reduce_difficulty(self):
-        if self.difficulty > 0:
+        if self.difficulty > 2:
             self.difficulty -= 1
 
     def get_last_block(self):
