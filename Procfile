@@ -1,1 +1,1 @@
-web: python blockchain_server.py
+web: python ./src/app.py
