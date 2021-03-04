@@ -4,6 +4,7 @@ import os
 import time
 import threading
 from flask import Flask, jsonify
+from flask import render_template
 
 from classes.Blockchain import Blockchain
 
@@ -11,6 +12,11 @@ app = Flask(__name__)
 
 
 blockchain = Blockchain()
+
+
+@app.route('/', methods=['GET'])
+def index():
+    return render_template('index.html')
 
 
 @app.route('/blocks', methods=['GET'])
@@ -67,3 +73,5 @@ if __name__ == "__main__":
     x.start()
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
+    # Local
+    # app.run(host='127.0.0.1', port=port)
