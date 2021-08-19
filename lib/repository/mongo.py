@@ -1,5 +1,6 @@
 from typing import List
 import pymongo
+import os
 
 from lib.domain.Block import Block
 from lib.repository.repository import Repository
@@ -7,7 +8,7 @@ from lib.repository.repository import Repository
 
 class MongoRepository(Repository):
     def __init__(self):
-        self.client = pymongo.MongoClient("mongodb+srv://fernando:blockchainsper@cluster0.1gkv8.mongodb.net/myFirstDatabase?retryWrites=true&w=majority")
+        self.client = pymongo.MongoClient(os.environ.get("MONGO_URL"))
 
     def list(self) -> List[Block]:
         chain = self.client.Blockchain.blocks.find({}, {'_id': False})
