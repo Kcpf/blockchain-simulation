@@ -8,6 +8,8 @@ verify_ssl = true
 
 Flask = "*"
 pycryptodome = "*"
+pymongo = "*"
+dnspython = "*"
 
 [requires]
 
