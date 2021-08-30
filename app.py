@@ -13,6 +13,7 @@ from lib.use_cases.check_validity import check_validity_use_case
 from lib.use_cases.get_difficulty import get_difficulty_use_case
 from lib.use_cases.get_last_hash import get_last_hash_use_case
 from lib.use_cases.change_difficulty import reduce_difficulty_use_case
+from lib.use_cases.get_height import get_height_use_case
 from lib.repository.memory import MemoryRepository
 from lib.repository.mongo import MongoRepository
 
@@ -25,62 +26,49 @@ blockchain = Blockchain(repository)
 def update_chain():
     blockchain.chain = repository.list()
 
-
-@app.route('/blocks', methods=['GET'])
+@app.route('/', methods=['GET'])
 def display_chain():
     chain = get_chain_use_case(blockchain)
     response = {"chain": chain, "length": len(chain)}
 
     return jsonify(response), 200
 
+@app.route('/info', methods=['GET'])
+def display_info():
+    valid = check_validity_use_case(blockchain)
+    last_hash = get_last_hash_use_case(blockchain)
+    difficulty = get_difficulty_use_case(blockchain)
+    height = get_height_use_case(blockchain)
 
-@app.route('/blocks/last_hash', methods=['GET'])
-def display_last_hash():
-    response = {"last_hash": get_last_hash_use_case(blockchain)}
+    response = {
+        "valid": valid,
+        "last_hash": last_hash,
+        "difficulty": difficulty,
+        "height": height
+    }
 
     return jsonify(response), 200
 
-
-@app.route('/blocks/difficulty', methods=['GET'])
-def display_difficulty():
-    response = {"difficulty": get_difficulty_use_case(blockchain)} 
-
-    return jsonify(response), 200
-
-
-@app.route('/blocks/mine', methods=['POST'])
+@app.route('/mine', methods=['POST'])
 def mine():
-    block_information = flask.request.json["block"]
-    
-    if block_information == None: return "Invalid POST", 500
-
-    timestamp, message, nounce, previous_hash = block_information.split("|")
+    block_information = flask.request.get_json()
 
     block = Block(
-        nounce,
-        timestamp,
-        message,
-        previous_hash
+        block_information["height"],
+        block_information["previous_hash"],
+        block_information["merkle_root"],
+        block_information["timestamp"],
+        block_information["difficulty"],
+        block_information["nonce"],
+        block_information["tx"],
     )
 
-    result = add_block_use_case(blockchain, block, repository)
+    try:
+        add_block_use_case(blockchain, block, repository)
+    except AssertionError as error:
+        return f"Algo deu errado, tente novamente!\n{error}", 500
 
-    if result: return "Bloco foi minerado com sucesso", 200
-    
-    return "Algo deu errado, tente novamente!", 500
-
-
-@app.route('/blocks/valid', methods=['GET'])
-def valid():
-    valid = check_validity_use_case(blockchain)
-
-    if valid:
-        response = {'message': 'Blockchain é válida.'}
-    else:
-        response = {'message': 'Blockchain não é válida.'}
-        
-    return jsonify(response), 200
-
+    return "Bloco foi minerado com sucesso", 200
 
 def difficulty():
     while True:

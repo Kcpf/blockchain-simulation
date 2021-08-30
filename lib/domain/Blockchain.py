@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from typing import List
 
 from lib.domain.Block import Block
+from lib.domain.utils import calculate_merkle_root
 from lib.repository.repository import Repository
 
 @dataclass
@@ -17,11 +18,16 @@ class Blockchain:
 
         if len(repository.list()) == 0:
             # Creating genesis block
+            tx = ["Genesis block"]
+
             genesis_block = Block(
-                nounce = 1,
+                previous_hash = '0',
+                merkle_root = calculate_merkle_root(tx),
                 timestamp = time.time(),
-                message = "Bloco Gênesis",
-                previous_hash = '0'
+                difficulty = 0,
+                nonce = 0,
+                height = 0,
+                tx=tx
             )
 
             repository.create(genesis_block)
