@@ -73,7 +73,7 @@ def mine():
 def difficulty():
     while True:
         reduce_difficulty_use_case(blockchain)
-        time.sleep(300)
+        time.sleep(3600)
 
 
 if __name__ == "__main__":
